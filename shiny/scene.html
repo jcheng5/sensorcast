@@ -23,12 +23,21 @@ function mathboxSetup() {
     .camera({
       orbit: 3.5,
       phi: τ/4,
-      theta: 0,
+      theta: -τ/4 + 0.06,
     })
     .transition(300)
+  mathbox.grid();
 
   mathbox.vector({
-    id: "vector",
+    id: "vector1",
+    data: [[0, 0, 0], [0, 0, 0]]
+  });
+  mathbox.vector({
+    id: "vector2",
+    data: [[0, 0, 0], [0, 0, 0]]
+  });
+  mathbox.vector({
+    id: "vector3",
     data: [[0, 0, 0], [0, 0, 0]]
   });
 }

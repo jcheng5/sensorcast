@@ -13,6 +13,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.opengl.Matrix;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -56,13 +57,24 @@ public class SensorActivity extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
     	TextView textView = (TextView)findViewById(R.id.sensor_output);
-    	textView.setText(event.values[0] + "\n" + event.values[1] + "\n" + event.values[2] + "\n" + event.values[3] + "\n" + event.values[4] + "\n");
+    	
+    	float[] rotationMatrix = new float[16]; 
+    	SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
+    	float[] rotationMatrix2 = new float[16];
+    	Matrix.transposeM(rotationMatrix2, 0, rotationMatrix, 0);
+    	float[] resultVector = new float[12];
+    	Matrix.multiplyMV(resultVector, 0, rotationMatrix2, 0, new float[] {1, 0, 0, 1}, 0);
+    	Matrix.multiplyMV(resultVector, 4, rotationMatrix2, 0, new float[] {0, 1, 0, 1}, 0);
+    	Matrix.multiplyMV(resultVector, 8, rotationMatrix2, 0, new float[] {0, 0, 1, 1}, 0);
+
+    	textView.setText(resultVector[0] + "\n" + resultVector[1] + "\n" + resultVector[2] + "\n");
 
     	ByteArrayOutputStream baos = new ByteArrayOutputStream(event.values.length * 4);
 		DataOutputStream dos = new DataOutputStream(baos);
 		try {
-			for (float v : event.values)
+			for (float v : resultVector)
 				dos.writeFloat(v);
+			dos.writeFloat(event.values[4]);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			throw new RuntimeException(e1);

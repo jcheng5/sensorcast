@@ -1,20 +1,20 @@
-data <- fifo("~/workspace/Sensorcast/node/data", "r")
-values <- reactiveValues(vector=c(0, 0, 0), rawdata="Waiting...")
+library(httpuv)
+
+values <- reactiveValues(vector=c(0, 0, 0))
+onMessage <- function(msg) {
+  if (length(msg) == 0)
+    return()
+  values$vector <- readBin(msg, numeric(), n=12, size=4, endian="big")
+  shiny:::flushReact()
+}
+server <- httpuv:::startUdpServer("224.0.0.0", "0.0.0.0", 5678, onMessage)
+stopifnot(!is.null(server))
 
 shinyServer(function(input, output, session) {
-  observe({
-    invalidateLater(200, session)
-
-    chrdata <- readLines(data)
-    if (length(chrdata) > 0) {
-      values$rawdata <- tail(chrdata, 1)
-      values$vector <- as.numeric(strsplit(tail(chrdata, 1), ",")[[1]])
-    }
-  })
-
-  output$rawdata <- renderText({ as.character(values$vector) })
-
-  observe(
+  obs <- observe(
     session$sendCustomMessage("vector", values$vector)
   )
+  session$onSessionEnded(function() {
+    obs$suspend()
+  })
 })
